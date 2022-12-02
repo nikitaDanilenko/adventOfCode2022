@@ -4,6 +4,7 @@ import cats.parse.Parser
 import day02.Day02.RPS.Rock
 
 import scala.io.Source
+import scala.util.chaining._
 
 object Day02 {
 
@@ -64,15 +65,61 @@ object Day02 {
   def score(round: Round): Int =
     outcomePoints(ownOutcome(round)) + points(round.own)
 
-  lazy val input: Iterator[Round] = Source
+  case class DesiredOutcome(
+      opponent: RPS,
+      outcome: Outcome
+  )
+
+  val outcomeParser: Parser[Outcome] = Parser.oneOf(
+    List(
+      Parser.char('X').map(_ => Outcome.Loss),
+      Parser.char('Y').map(_ => Outcome.Draw),
+      Parser.char('Z').map(_ => Outcome.Win)
+    )
+  )
+
+  val desiredOutcomeParser = for {
+    opponent <- rpsParserOpponent
+    _ <- Parser.char(' ')
+    outcome <- outcomeParser
+  } yield DesiredOutcome(opponent, outcome)
+
+  def complementFor(desiredOutcome: DesiredOutcome): RPS =
+    desiredOutcome.outcome match
+      case Outcome.Loss =>
+        desiredOutcome.opponent match
+          case RPS.Rock     => RPS.Scissors
+          case RPS.Paper    => RPS.Rock
+          case RPS.Scissors => RPS.Paper
+
+      case Outcome.Draw => desiredOutcome.opponent
+      case Outcome.Win =>
+        desiredOutcome.opponent match
+          case RPS.Rock     => RPS.Paper
+          case RPS.Paper    => RPS.Scissors
+          case RPS.Scissors => RPS.Rock
+
+  lazy val input1: Iterator[Round] = Source
     .fromResource("day02.txt")
     .getLines()
     .flatMap(roundParser.parse(_).map(_._2).toOption)
 
+  lazy val input2 = Source
+    .fromResource("day02.txt")
+    .getLines()
+    .flatMap(desiredOutcomeParser.parse(_).map(_._2).toOption)
+
   @main
   def solution1(): Unit =
-    val result = input
+    val result = input1
       .map(score)
+      .sum
+    pprint.log(result)
+
+  @main
+  def solution2(): Unit =
+    val result = input2
+      .map(desiredOutcome => Round(desiredOutcome.opponent, complementFor(desiredOutcome)).pipe(score))
       .sum
     pprint.log(result)
 

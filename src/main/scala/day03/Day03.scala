@@ -26,4 +26,17 @@ object Day03 {
       .sum
       .pipe(pprint.log(_))
 
+  @main
+  def solution2(): Unit =
+    input
+      .grouped(3)
+      .flatMap { ls =>
+        ls
+          .map(_.toSet)
+          .foldLeft(charValues.keySet)(_.intersect(_))
+      }
+      .map(charValues.apply)
+      .sum
+      .pipe(pprint.log(_))
+
 }

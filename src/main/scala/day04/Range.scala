@@ -2,6 +2,7 @@ package day04
 
 import cats.parse.Parser
 import cats.parse.Rfc5234.*
+import spire.math.Interval
 import utils.ParserUtil
 
 case class Range(
@@ -17,9 +18,10 @@ object Range {
     end <- ParserUtil.int
   } yield Range(start, end)
 
-  def toVector(range: Range): Vector[Int] =
-    range.start
-      .to(range.end)
-      .toVector
+  def toInterval(range: Range): Interval[Int] =
+    Interval.closed(
+      range.start,
+      range.end
+    )
 
 }

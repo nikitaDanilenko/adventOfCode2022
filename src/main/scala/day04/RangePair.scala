@@ -18,16 +18,15 @@ object RangePair {
     } yield RangePair(first, second)
 
   def containsAny(rangePair: RangePair): Boolean = {
-    val first = rangePair.first.pipe(Range.toVector)
-    val second = rangePair.second.pipe(Range.toVector)
-    val intersection = first.intersect(second)
-    intersection == first || intersection == second
+    val first = rangePair.first.pipe(Range.toInterval)
+    val second = rangePair.second.pipe(Range.toInterval)
+    first.isSubsetOf(second) || second.isSubsetOf(first)
   }
 
   def overlaps(rangePair: RangePair): Boolean =
     rangePair.first
-      .pipe(Range.toVector)
-      .intersect(rangePair.second.pipe(Range.toVector))
+      .pipe(Range.toInterval)
+      .intersect(rangePair.second.pipe(Range.toInterval))
       .nonEmpty
 
 }

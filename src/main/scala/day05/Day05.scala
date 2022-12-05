@@ -18,12 +18,15 @@ object Day05 {
   //First item is the top-most one
   type Stacks = Map[Int, Vector[Char]]
 
-  def applyCommand(stacks: Stacks, command: Command): Stacks = {
+  def applyCommand(singleLift: Boolean)(
+      stacks: Stacks,
+      command: Command
+  ): Stacks = {
     val at = stacks(command.from)
     val (removed, remaining) = at.splitAt(command.amount)
     stacks
       .updated(command.from, remaining)
-      .updated(command.to, removed.reverse ++ stacks(command.to))
+      .updated(command.to, (if (singleLift) removed.reverse else removed) ++ stacks(command.to))
   }
 
   val inputStacks: Stacks = Map(
@@ -48,10 +51,11 @@ object Day05 {
     .mapValues(_.toVector)
     .toMap
 
-  @main
-  def solution1(): Unit =
+  def applyCommands(
+      singleLift: Boolean
+  ): Unit =
     commands
-      .foldLeft(inputStacks)(applyCommand)
+      .foldLeft(inputStacks)(applyCommand(singleLift = singleLift))
       .view
       .mapValues(_.head)
       .toList
@@ -59,5 +63,13 @@ object Day05 {
       .map(_._2)
       .mkString
       .pipe(pprint.log(_))
+
+  @main
+  def solution1(): Unit =
+    applyCommands(singleLift = true)
+
+  @main
+  def solution2(): Unit =
+    applyCommands(singleLift = false)
 
 }

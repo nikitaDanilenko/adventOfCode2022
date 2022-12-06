@@ -11,14 +11,26 @@ object Day06 {
     .toList
     .head
 
-  @main
-  def solution1(): Unit = {
-    input
-      .sliding(4)
+  def firstDistinctOf(
+      string: String,
+      size: Int
+  ): Option[Int] =
+    string
+      .sliding(size)
       .zipWithIndex
       .collectFirst {
-        case (str, i) if str.distinct == str => i + 4
+        case (str, i) if str.distinct == str => i + size
       }
+
+  @main
+  def solution1(): Unit = {
+    firstDistinctOf(input, 4)
+      .pipe(pprint.log(_))
+  }
+
+  @main
+  def solution2(): Unit = {
+    firstDistinctOf(input, 14)
       .pipe(pprint.log(_))
   }
 

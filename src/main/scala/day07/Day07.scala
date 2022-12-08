@@ -168,4 +168,14 @@ object Day07 {
       .pipe(_.sum)
       .pipe(pprint.log(_))
 
+  @main
+  def solution2(): Unit =
+    val fse = addViaCommands(input)
+    val totalSize = sizeOf(fse)
+    val unused = 70000000 - totalSize
+    val upTo = collectUpTo(fse, totalSize)
+    upTo.sorted
+      .collectFirst { case size if unused + size >= 30000000 => size }
+      .pipe(pprint.log(_))
+
 }

@@ -41,6 +41,10 @@ object Day09 {
 
   def moveToHead(head: Pos, tail: Pos): Pos =
     val diff = head - tail
+    val isTopRight = diff.x > 0 && diff.y > 0
+    val isTopLeft = diff.x < 0 && diff.y > 0
+    val isBottomRight = diff.x > 0 && diff.y < 0
+    val isBottomLeft = diff.x < 0 && diff.y < 0
     val move =
       if (diff.x.abs <= 1 && diff.y.abs <= 1)
         AdditiveGroup[Pos].zero
@@ -52,11 +56,11 @@ object Day09 {
         Pos(1, 0)
       else if (diff == Pos(-2, 0))
         Pos(-1, 0)
-      else if (diff == Pos(1, 2) || diff == Pos(2, 1))
+      else if (isTopRight)
         Pos(1, 1)
-      else if (diff == Pos(2, -1) || diff == Pos(1, -2))
+      else if (isBottomRight)
         Pos(1, -1)
-      else if (diff == Pos(-1, -2) || diff == Pos(-2, -1))
+      else if (isBottomLeft)
         Pos(-1, -1)
       else
         Pos(-1, 1)
@@ -71,7 +75,7 @@ object Day09 {
         case Direction.D => Pos(0, -move.units)
     step + pos
 
-  def moveAll(moves: Iterable[Move]): Int =
+  def moveAll1(moves: Iterable[Move]): Int =
     val (_, _, finalVisited) =
       moves.foldLeft((AdditiveGroup[Pos].zero, AdditiveGroup[Pos].zero, Set(AdditiveGroup[Pos].zero))) {
         case ((head, tail, visited), move) =>
@@ -81,12 +85,40 @@ object Day09 {
       }
     finalVisited.size
 
+  def moveAll10(moves: Iterable[Move]): Int =
+    val zero = AdditiveGroup[Pos].zero
+    val (_, _, finalVisited) =
+      moves.foldLeft(zero, List.fill(9)(zero), Set(zero)) { case ((h, ts, visited), move) =>
+        val movedHead = movePos(h, move)
+        val movedTs = ts
+          .foldLeft((List.empty[Pos], movedHead)) { case ((list, moved), next) =>
+            val movedNext = moveToHead(moved, next)
+            (list :+ movedNext, movedNext)
+          }
+          ._1
+
+        (
+          movedHead,
+          movedTs,
+          visited + movedTs.last
+        )
+      }
+    finalVisited.size
+
   @main
   def solution1(): Unit =
     input
       .flatMap(Move.unfold)
       .toList
-      .pipe(moveAll)
+      .pipe(moveAll1)
+      .pipe(pprint.log(_))
+
+  @main
+  def solution2(): Unit =
+    input
+      .flatMap(Move.unfold)
+      .toList
+      .pipe(moveAll10)
       .pipe(pprint.log(_))
 
 }

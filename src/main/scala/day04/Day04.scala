@@ -6,7 +6,7 @@ import scala.util.chaining._
 object Day04 {
 
   val input: Iterator[RangePair] = Source
-    .fromResource("day04.txt")
+    .fromResource("real/day04.txt")
     .getLines()
     .flatMap(
       RangePair.parser

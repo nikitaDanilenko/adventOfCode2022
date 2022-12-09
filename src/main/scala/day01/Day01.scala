@@ -6,7 +6,7 @@ import utils.CollectionUtil.syntax._
 object Day01 {
 
   lazy val numberGroups: Seq[Seq[Int]] = Source
-    .fromResource("day01.txt")
+    .fromResource("real/day01.txt")
     .getLines()
     .toList
     .splitOn("")

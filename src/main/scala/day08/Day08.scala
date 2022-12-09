@@ -11,7 +11,7 @@ object Day08 {
   type Forest = Map[(Int, Int), Int]
 
   val input: Forest = Source
-    .fromResource("day08.txt")
+    .fromResource("real/day08.txt")
     .getLines()
     .zipWithIndex
     .flatMap { case (str, i) =>

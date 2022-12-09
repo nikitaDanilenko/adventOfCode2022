@@ -6,7 +6,7 @@ import scala.util.chaining._
 object Day06 {
 
   val input: String = Source
-    .fromResource("day06.txt")
+    .fromResource("real/day06.txt")
     .getLines()
     .toList
     .head

@@ -134,7 +134,7 @@ object Day07 {
   }
 
   val input: List[Command] = Source
-    .fromResource("day07.txt")
+    .fromResource("real/day07.txt")
     .getLines()
     .flatMap(Command.parser.parse(_).toOption.map(_._2))
     .toList

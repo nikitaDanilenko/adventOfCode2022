@@ -100,12 +100,12 @@ object Day02 {
           case RPS.Scissors => RPS.Rock
 
   lazy val input1: Iterator[Round] = Source
-    .fromResource("day02.txt")
+    .fromResource("real/day02.txt")
     .getLines()
     .flatMap(roundParser.parse(_).map(_._2).toOption)
 
   lazy val input2 = Source
-    .fromResource("day02.txt")
+    .fromResource("real/day02.txt")
     .getLines()
     .flatMap(desiredOutcomeParser.parse(_).map(_._2).toOption)
 

@@ -9,7 +9,7 @@ import scala.util.chaining._
 object Day09 {
 
   val input: Iterator[Move] = Source
-    .fromResource("day09.txt")
+    .fromResource("real/day09.txt")
     .getLines()
     .flatMap(Move.parser.parse(_).toOption.map(_._2))
 

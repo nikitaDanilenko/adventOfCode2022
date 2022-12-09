@@ -7,7 +7,7 @@ object Day03 {
 
   val input: Iterator[String] =
     Source
-      .fromResource("day03.txt")
+      .fromResource("real/day03.txt")
       .getLines()
 
   private val charValues: Map[Char, Int] =

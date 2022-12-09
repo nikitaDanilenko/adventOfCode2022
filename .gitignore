@@ -3,4 +3,4 @@
 target
 *.class
 *.log
-resources/real/
+src/main/resources/real/

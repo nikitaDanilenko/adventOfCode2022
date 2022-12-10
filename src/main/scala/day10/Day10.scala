@@ -19,6 +19,18 @@ object Day10 {
         case CycleInstruction.AddValue(value) => register + value
     }
 
+  def visualize(commands: List[Command]): List[List[Char]] =
+    def spriteArea(value: Int): Set[Int] = Set(value - 1, value, value + 1)
+    processCommands(commands)
+      .grouped(40)
+      .toList
+      .map(
+        _.zipWithIndex
+          .map { case (value, index) =>
+            if (spriteArea(value).contains(index)) '#' else '.'
+          }
+      )
+
   @main
   def solution1(): Unit =
     input
@@ -28,5 +40,12 @@ object Day10 {
       .pipe(_.collect { case (value, index) if List(20, 60, 100, 140, 180, 220).contains(index) => value * index })
       .pipe(_.sum)
       .pipe(pprint.log(_))
+
+  @main
+  def solution2(): Unit =
+    input
+      .pipe(visualize)
+      .pipe(_.map(_.mkString).mkString("\n"))
+      .pipe(println)
 
 }

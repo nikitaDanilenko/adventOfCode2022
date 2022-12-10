@@ -28,7 +28,7 @@ object Day07 {
 
     val parser: Parser[FSE] = {
       val fileParser = for {
-        size <- ParserUtil.int
+        size <- ParserUtil.positiveInt
         _ <- Parser.char(' ')
         name <- Parser.anyChar.rep0.map(_.mkString)
       } yield File(

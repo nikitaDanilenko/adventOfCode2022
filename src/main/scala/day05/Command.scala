@@ -15,11 +15,11 @@ object Command {
   val parser: Parser[Command] =
     for {
       _ <- Parser.string("move ")
-      amount <- ParserUtil.int
+      amount <- ParserUtil.positiveInt
       _ <- Parser.string(" from ")
-      from <- ParserUtil.int
+      from <- ParserUtil.positiveInt
       _ <- Parser.string(" to ")
-      to <- ParserUtil.int
+      to <- ParserUtil.positiveInt
 
     } yield Command(
       amount = amount,

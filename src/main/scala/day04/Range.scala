@@ -13,9 +13,9 @@ case class Range(
 object Range {
 
   val parser: Parser[Range] = for {
-    start <- ParserUtil.int
+    start <- ParserUtil.positiveInt
     _ <- Parser.char('-')
-    end <- ParserUtil.int
+    end <- ParserUtil.positiveInt
   } yield Range(start, end)
 
   def toInterval(range: Range): Interval[Int] =

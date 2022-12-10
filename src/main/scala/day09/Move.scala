@@ -13,7 +13,7 @@ object Move {
   val parser: Parser[Move] = for {
     direction <- Direction.parser
     _ <- Parser.char(' ')
-    units <- ParserUtil.int
+    units <- ParserUtil.positiveInt
   } yield Move(direction, units)
 
   def unfold(move: Move): List[Move] =

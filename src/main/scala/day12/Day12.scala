@@ -18,7 +18,8 @@ object Day12 {
   case class Input(
       graph: Graph[Pos],
       start: Pos,
-      end: Pos
+      end: Pos,
+      lowest: Set[Pos]
   )
 
   val input: Input = {
@@ -54,6 +55,8 @@ object Day12 {
     val start = nodeMap.find(_._2 == 'S').get._1
     val end = nodeMap.find(_._2 == 'E').get._1
 
+    val lowest = nodeMap.filter { case (_, c) => c == 'S' || c == 'a' }.keySet
+
     Input(
       graph = Graph(
         nodeMap.map { case (pos, c) =>
@@ -61,22 +64,40 @@ object Day12 {
         }
       ),
       start = start,
-      end = end
+      end = end,
+      lowest = lowest
     )
   }
 
-  @main
-  def solution1(): Unit =
+  def shortestPathFromTo(
+      start: Set[Pos],
+      target: Set[Pos]
+  ): Option[Int] =
     val steps = Graph.layers(
-      from = Set(input.start),
+      from = start,
       graph = input.graph
     )
     val (path, rest) =
-      steps.span(!_.contains(input.end))
+      steps.map(_.intersect(target)).span(_.isEmpty)
 
-    if (rest.headOption.exists(_.contains(input.end)))
-      pprint.log(path.length)
-    else
-      pprint.log("No path found")
+    Some(path.length).filter(_ => rest.headOption.nonEmpty)
+
+  @main
+  def solution1(): Unit =
+    val shortest = shortestPathFromTo(
+      start = Set(input.start),
+      target = Set(input.end)
+    )
+
+    shortest.fold(pprint.log("No path found"))(pprint.log(_))
+
+  @main
+  def solution2(): Unit =
+    val shortest = shortestPathFromTo(
+      start = input.lowest,
+      target = Set(input.end)
+    )
+
+    shortest.fold(pprint.log("No path found"))(pprint.log(_))
 
 }

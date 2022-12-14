@@ -52,11 +52,25 @@ object Day14 {
     case class Settled(pos: Pos) extends Movement
   }
 
-  def trickle(structure: Set[Pos]): Set[Pos] =
+  case class Boundaries(
+      xMin: Int,
+      xMax: Int,
+      yMax: Int
+  )
+
+  def boundaries(structure: Set[Pos]): Boundaries =
     val xs = structure.map(_.x)
     val xMin = xs.min
     val xMax = xs.max
     val yMax = structure.map(_.y).max
+    Boundaries(
+      xMin = xMin,
+      xMax = xMax,
+      yMax = yMax
+    )
+
+  def trickle(structure: Set[Pos]): Set[Pos] =
+    val Boundaries(xMin, xMax, yMax) = boundaries(structure)
 
     def inArea(pos: Pos): Boolean =
       pos.x >= xMin && pos.x <= xMax && pos.y <= yMax
@@ -100,10 +114,11 @@ object Day14 {
     repeat(structure)
 
   def draw(structure: Set[Pos]): Unit =
+    val Boundaries(xMin, xMax, yMax) = boundaries(structure)
     val string = for {
-      y <- 0.to(9)
-    } yield 494
-      .to(503)
+      y <- 0.to(yMax)
+    } yield xMin
+      .to(xMax)
       .map { x =>
         val pos = Pos(x, y)
         if input.contains(pos) then '#'
@@ -116,6 +131,14 @@ object Day14 {
   @main
   def solution1(): Unit =
     val grains = trickle(input).size - input.size
+    pprint.log(grains)
+
+  @main
+  def solution2(): Unit =
+    val bs = boundaries(input)
+    val newYMax = bs.yMax + 2
+    val modifiedInput = input ++ (500 - newYMax).to(500 + newYMax).map(Pos(_, bs.yMax + 2))
+    val grains = trickle(modifiedInput).size - modifiedInput.size
     pprint.log(grains)
 
 }

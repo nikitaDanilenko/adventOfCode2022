@@ -4,7 +4,9 @@ import spire.algebra.{ AdditiveGroup, AdditiveMonoid }
 
 import scala.io.Source
 import spire.implicits.*
-import scala.util.chaining._
+import utils.Pos
+
+import scala.util.chaining.*
 
 object Day09 {
 
@@ -12,32 +14,6 @@ object Day09 {
     .fromResource("real/day09.txt")
     .getLines()
     .flatMap(Move.parser.parse(_).toOption.map(_._2))
-
-  case class Pos(
-      x: Int,
-      y: Int
-  )
-
-  object Pos {
-
-    implicit val monoid: AdditiveGroup[Pos] = new AdditiveGroup[Pos] {
-      override def zero: Pos = Pos(0, 0)
-
-      override def plus(pos1: Pos, pos2: Pos): Pos =
-        Pos(
-          pos1.x + pos2.x,
-          pos1.y + pos2.y
-        )
-
-      override def negate(x: Pos): Pos =
-        Pos(
-          -x.x,
-          -x.y
-        )
-
-    }
-
-  }
 
   def moveToHead(head: Pos, tail: Pos): Pos =
     val diff = head - tail

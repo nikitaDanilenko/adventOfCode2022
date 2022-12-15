@@ -1,7 +1,7 @@
 package day14
 
-import cats.parse.{ Parser, Parser0 }
-import utils.ParserUtil
+import cats.parse.{Parser, Parser0}
+import utils.{ParserUtil, Pos}
 
 import scala.annotation.tailrec
 import scala.io.Source

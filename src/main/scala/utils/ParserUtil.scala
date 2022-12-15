@@ -10,4 +10,17 @@ object ParserUtil {
       .rep(1)
       .map(_.toList.mkString.toInt)
 
+  val int: Parser[Int] = {
+    val negative = for {
+      _ <- Parser.char('-')
+      p <- positiveInt
+    } yield -p
+    Parser.oneOf(
+      List(
+        positiveInt,
+        negative
+      )
+    )
+  }
+
 }

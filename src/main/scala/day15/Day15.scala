@@ -2,7 +2,6 @@ package day15
 
 import cats.Order
 import spire.math.interval.{ Bound, Closed, EmptyBound, Open, Unbound, ValueBound }
-import spire.math.{ Interval, min }
 import utils.Pos
 
 import scala.io.Source
@@ -31,34 +30,13 @@ object Day15 {
     )
   }
 
-  def diffAll[A: Order](interval: Interval[A], diffs: List[Interval[A]]): List[Interval[A]] =
-    diffs.foldLeft(List(interval))((is, d) => is.flatMap(_ -- d))
-
-  def intersectAllWithY(targetY: Int): List[Interval[Int]] =
+  def intersectAllWithY(targetY: Int): List[Interval] =
     val intervals = ballsAndBeacons
       .map(ballAndBeacon => P1Ball.intersectAtY(targetY, ballAndBeacon.ball))
-    val beaconIntervals = ballsAndBeacons.collect { case bb if bb.beacon.y == targetY => Interval.point(bb.beacon.x) }
-    intervals.flatMap(interval => diffAll(interval, beaconIntervals))
-
-  def extractValue[A](bound: Bound[A]): Option[A] = bound match
-    case EmptyBound() => None
-    case Unbound()    => None
-    case Open(a)      => Some(a)
-    case Closed(a)    => Some(a)
-
-  def length(interval: Interval[Int]): Int = (interval.lowerBound, interval.upperBound) match {
-    case (Open(a), Open(b)) if a + 1 <= b - 1 => 1 + b - a - 2
-    case (Open(a), Closed(b)) if a + 1 <= b   => 1 + b - a - 1
-    case (Closed(a), Open(b)) if a <= b - 1   => 1 + b - a - 1
-    case (Closed(a), Closed(b))               => 1 + b - a
-    case _ =>
-      0
-  }
-//    val l = for {
-//      lower <- extractValue(interval.lowerBound)
-//      upper <- extractValue(interval.upperBound)
-//    } yield upper - lower
-//    l.getOrElse(0)
+    val beaconIntervals = ballsAndBeacons.collect {
+      case bb if bb.beacon.y == targetY => Interval.NonEmpty(bb.beacon.x, bb.beacon.x)
+    }
+    intervals.flatMap(interval => Interval.diffAll(interval, beaconIntervals))
 
   @main
   def solution1(): Unit =
@@ -69,11 +47,11 @@ object Day15 {
       ballAndBeacon.ball.centre.x + ballAndBeacon.ball.radius
     }.max
     val targetY = 2000000
-    val yInterval = Interval.closed(minX, maxX)
-    val fullSize = length(yInterval)
+    val yInterval = Interval.NonEmpty(minX, maxX)
+    val fullSize = Interval.length(yInterval)
     val onTargetY = intersectAllWithY(targetY = targetY)
-    val diffInterval = diffAll(yInterval, onTargetY)
-    val subSizes = diffInterval.map(length).sum
+    val diffInterval = Interval.diffAll(yInterval, onTargetY)
+    val subSizes = diffInterval.map(Interval.length).sum
     // A <= X ==> |X \ A| = |X| - |A|, i.e. |A| = |X| - |X \ A|
     pprint.log(fullSize - subSizes)
 
@@ -84,15 +62,15 @@ object Day15 {
   def preSolution2(): Unit =
     val minBound = 0
     val maxBound = 4000000
-    val bounded = Interval.closed(minBound, maxBound)
+    val bounded = Interval.NonEmpty(minBound, maxBound)
     // Find the first (and only) such that there is a non-covered point on the grid
     val targetY =
       minBound
         .to(maxBound)
         .iterator
         .map { targetY =>
-          val s = intersectAllWithY(targetY).map(_.intersect(bounded))
-          targetY -> diffAll(bounded, s).map(length).sum
+          val s = intersectAllWithY(targetY).map(Interval.intersect(_, bounded))
+          targetY -> Interval.diffAll(bounded, s).map(Interval.length).sum
         }
         .filter { case (y, size) =>
           if (y % 100000 == 0)
@@ -114,10 +92,10 @@ object Day15 {
   def finishSolution2(): Unit =
     val minBound = 0
     val maxBound = 4000000
-    val bounded = Interval.closed(minBound, maxBound)
+    val bounded = Interval.NonEmpty(minBound, maxBound)
     val targetY = 3230812 // computed in the preparation
     val onTargetY = intersectAllWithY(targetY = targetY)
-    val diffInterval = diffAll(bounded, onTargetY)
+    val diffInterval = Interval.diffAll(bounded, onTargetY)
     pprint.log(diffInterval.toString())
 
     val bigInt = BigInt(3293021) * BigInt(4000000) + BigInt(targetY)

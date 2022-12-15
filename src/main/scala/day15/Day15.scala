@@ -1,7 +1,6 @@
 package day15
 
 import cats.Order
-import spire.math.interval.{ Bound, Closed, EmptyBound, Open, Unbound, ValueBound }
 import utils.Pos
 
 import scala.io.Source
@@ -50,6 +49,7 @@ object Day15 {
     val yInterval = Interval(minX, maxX)
     val fullSize = Interval.length(yInterval)
     val onTargetY = intersectAllWithY(targetY = targetY)
+    pprint.log(onTargetY)
     val diffInterval = Interval.diffAll(yInterval, onTargetY)
     val subSizes = diffInterval.map(Interval.length).sum
     // A <= X ==> |X \ A| = |X| - |A|, i.e. |A| = |X| - |X \ A|
@@ -58,45 +58,39 @@ object Day15 {
   // Sketchy from here. Compute the same value for the computed targetY, as in part 1.
   //
 
+  def extractSingleValue(interval: Interval): Option[Int] =
+    interval match
+      case Interval.NonEmpty(lower, upper) if lower == upper => Some(lower)
+      case _                                                 => None
+
   @main
-  def preSolution2(): Unit =
+  def solution2(): Unit =
     val minBound = 0
     val maxBound = 4000000
     val bounded = Interval(minBound, maxBound)
-    // Find the first (and only) such that there is a non-covered point on the grid
+    // Find the first (and only) such that there is a non-covered point on the grid.
+    // Takes a few seconds (10-20s) to complete.
     val targetY =
       minBound
         .to(maxBound)
         .iterator
         .map { targetY =>
           val s = intersectAllWithY(targetY)
-          val result = Interval.diffAll(bounded, s).map(Interval.length).sum
-          if (result > 0)
-            pprint.log(Interval.diffAll(bounded, s))
-          targetY -> Interval.diffAll(bounded, s).map(Interval.length).sum
+          val beaconIntervals = ballsAndBeacons.map(_.beacon).distinct.collect {
+            case beacon if beacon.y == targetY => Interval(beacon.x, beacon.x)
+          }
+          targetY -> Interval.diffAll(bounded, s ++ beaconIntervals).map(Interval.length).sum
         }
         .collectFirst { case (y, size) if size > 0 => y }
         .get
     pprint.log(targetY)
-
-  // Having completed the preparation, figure out the one missing x for the corresponding y.
-  // The result difference contains various singleton intervals and precisely one
-  // open interval. The necessary value is found in that open interval.
-  // It seems that there is a bug in my implementation, since I would have expected
-  // precisely one interval at all.
-  //
-  // Overall, the second part seems to show that the first part is not as concise as it should be.
-  @main
-  def finishSolution2(): Unit =
-    val minBound = 0
-    val maxBound = 4000000
-    val bounded = Interval(minBound, maxBound)
-    val targetY = 3230812 // computed in the preparation
     val onTargetY = intersectAllWithY(targetY = targetY)
-    val diffInterval = Interval.diffAll(bounded, onTargetY)
-    pprint.log(diffInterval)
+    // By precondition: Only one interval can occur.
+    val diffInterval = Interval.diffAll(bounded, onTargetY).head
+    // By precondition: Only a single point possible
+    val targetX = extractSingleValue(diffInterval).get
 
-    val bigInt = BigInt(3293021) * BigInt(4000000) + BigInt(targetY)
+    val bigInt = BigInt(targetX) * BigInt(4000000) + BigInt(targetY)
     pprint.log(bigInt)
 
 }

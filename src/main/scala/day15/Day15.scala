@@ -37,7 +37,7 @@ object Day15 {
   def intersectAllWithY(targetY: Int): List[Interval[Int]] =
     val intervals = ballsAndBeacons
       .map(ballAndBeacon => P1Ball.intersectAtY(targetY, ballAndBeacon.ball))
-    val beaconIntervals = ballsAndBeacons.map(bb => Interval.point(bb.beacon.x)) // overestimate
+    val beaconIntervals = ballsAndBeacons.collect { case bb if bb.beacon.y == targetY => Interval.point(bb.beacon.x) }
     intervals.flatMap(interval => diffAll(interval, beaconIntervals))
 
   def extractValue[A](bound: Bound[A]): Option[A] = bound match
@@ -46,12 +46,19 @@ object Day15 {
     case Open(a)      => Some(a)
     case Closed(a)    => Some(a)
 
-  def length(interval: Interval[Int]): Int =
-    val l = for {
-      lower <- extractValue(interval.lowerBound)
-      upper <- extractValue(interval.upperBound)
-    } yield upper - lower
-    l.getOrElse(0)
+  def length(interval: Interval[Int]): Int = (interval.lowerBound, interval.upperBound) match {
+    case (Open(a), Open(b)) if a + 1 <= b - 1 => 1 + b - a - 2
+    case (Open(a), Closed(b)) if a + 1 <= b   => 1 + b - a - 1
+    case (Closed(a), Open(b)) if a <= b - 1   => 1 + b - a - 1
+    case (Closed(a), Closed(b))               => 1 + b - a
+    case _ =>
+      0
+  }
+//    val l = for {
+//      lower <- extractValue(interval.lowerBound)
+//      upper <- extractValue(interval.upperBound)
+//    } yield upper - lower
+//    l.getOrElse(0)
 
   @main
   def solution1(): Unit =

@@ -14,6 +14,6 @@ object P1Ball {
 
   def intersectAtY(y: Int, p1Ball: P1Ball): Interval =
     val base = (y - p1Ball.centre.y).abs - p1Ball.radius
-    Interval.NonEmpty(base + p1Ball.centre.x, -base + p1Ball.centre.x)
+    Interval(base + p1Ball.centre.x, -base + p1Ball.centre.x)
 
 }

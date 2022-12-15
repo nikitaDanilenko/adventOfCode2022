@@ -34,7 +34,7 @@ object Day15 {
     val intervals = ballsAndBeacons
       .map(ballAndBeacon => P1Ball.intersectAtY(targetY, ballAndBeacon.ball))
     val beaconIntervals = ballsAndBeacons.collect {
-      case bb if bb.beacon.y == targetY => Interval.NonEmpty(bb.beacon.x, bb.beacon.x)
+      case bb if bb.beacon.y == targetY => Interval(bb.beacon.x, bb.beacon.x)
     }
     intervals.flatMap(interval => Interval.diffAll(interval, beaconIntervals))
 
@@ -47,7 +47,7 @@ object Day15 {
       ballAndBeacon.ball.centre.x + ballAndBeacon.ball.radius
     }.max
     val targetY = 2000000
-    val yInterval = Interval.NonEmpty(minX, maxX)
+    val yInterval = Interval(minX, maxX)
     val fullSize = Interval.length(yInterval)
     val onTargetY = intersectAllWithY(targetY = targetY)
     val diffInterval = Interval.diffAll(yInterval, onTargetY)
@@ -62,22 +62,20 @@ object Day15 {
   def preSolution2(): Unit =
     val minBound = 0
     val maxBound = 4000000
-    val bounded = Interval.NonEmpty(minBound, maxBound)
+    val bounded = Interval(minBound, maxBound)
     // Find the first (and only) such that there is a non-covered point on the grid
     val targetY =
       minBound
         .to(maxBound)
         .iterator
         .map { targetY =>
-          val s = intersectAllWithY(targetY).map(Interval.intersect(_, bounded))
+          val s = intersectAllWithY(targetY)
+          val result = Interval.diffAll(bounded, s).map(Interval.length).sum
+          if (result > 0)
+            pprint.log(Interval.diffAll(bounded, s))
           targetY -> Interval.diffAll(bounded, s).map(Interval.length).sum
         }
-        .filter { case (y, size) =>
-          if (y % 100000 == 0)
-            pprint.log(y)
-          size > 0
-        }
-        .collectFirst { case x => x._1 }
+        .collectFirst { case (y, size) if size > 0 => y }
         .get
     pprint.log(targetY)
 
@@ -92,11 +90,11 @@ object Day15 {
   def finishSolution2(): Unit =
     val minBound = 0
     val maxBound = 4000000
-    val bounded = Interval.NonEmpty(minBound, maxBound)
+    val bounded = Interval(minBound, maxBound)
     val targetY = 3230812 // computed in the preparation
     val onTargetY = intersectAllWithY(targetY = targetY)
     val diffInterval = Interval.diffAll(bounded, onTargetY)
-    pprint.log(diffInterval.toString())
+    pprint.log(diffInterval)
 
     val bigInt = BigInt(3293021) * BigInt(4000000) + BigInt(targetY)
     pprint.log(bigInt)

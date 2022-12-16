@@ -1,9 +1,10 @@
 package day16
 
 import cats.parse.Parser
-import utils.{ Graph, ParserUtil }
-import scala.util.chaining._
+import utils.{ CollectionUtil, Graph, ParserUtil }
 
+import scala.annotation.tailrec
+import scala.util.chaining.*
 import scala.io.Source
 
 object Day16 {
@@ -55,12 +56,76 @@ object Day16 {
       .toMap
       .pipe(Graph(_))
 
+  // largely based on https://github.com/sim642/adventofcode/blob/master/src/main/scala/eu/sim642/adventofcode2022/Day16.scala
+  def findMaxPressure(valveInfos: List[ValveInfo], maxMinutes: Int): Map[Set[String], Int] = {
+    val distances = Graph
+      .shortestPaths(mkGraph(input))
+      .perNode
+      .view
+      .mapValues {
+        _.collect { case (name, Graph.Tropical.Value(v)) => name -> v }
+      }
+
+    val valveMap = valveInfos.map(vi => vi.name -> vi).toMap
+    val nonZeroValves = valveInfos.collect { case vi if vi.flowRate > 0 => vi.name }.toSet
+
+    case class State(
+        atValve: String,
+        openValves: Set[String]
+    )
+
+    // First Int = Minutes, second Int = Pressure
+    type MinuteMap = Map[Int, Map[State, Int]]
+
+    def maxUnion[A](map1: Map[A, Int], map2: Map[A, Int]): Map[A, Int] = CollectionUtil.unionWith(map1, map2)(math.max)
+
+    @tailrec
+    def iterate(
+        passedMinutes: Int,
+        minutesMap: MinuteMap
+    ): Map[Set[String], Int] =
+      if (passedMinutes < maxMinutes) {
+        val newOpenValvesList = for {
+          (state, pressure) <- minutesMap.getOrElse(passedMinutes, Map.empty).toList
+          nextValve <- nonZeroValves.diff(state.openValves)
+          distance <- distances(state.atValve).get(nextValve).toList
+          finishedAtMinutes <- Some(passedMinutes + distance + 1) // +1 since opening takes a minute
+            .filter(_ < maxMinutes)
+            .toList
+        } yield finishedAtMinutes ->
+          Map(
+            State(
+              nextValve,
+              state.openValves + nextValve
+            ) ->
+              (pressure + valveMap(nextValve).flowRate * (maxMinutes - finishedAtMinutes))
+          )
+
+        // Minutes may occur multiple times, which is why it is necessary to compute a new map properly
+        val newOpenValves = newOpenValvesList
+          .groupBy(_._1)
+          .view
+          .mapValues(
+            _.map(_._2)
+              .foldLeft(Map.empty[State, Int])(maxUnion)
+          )
+          .toMap
+
+        val newMinutesMap = CollectionUtil.unionWith(minutesMap, newOpenValves)(maxUnion)
+        iterate(1 + passedMinutes, newMinutesMap)
+      } else {
+        minutesMap.values
+          .flatMap(_.map { case (state, pressure) => state.openValves -> pressure })
+          .map(Map(_))
+          .foldLeft(Map.empty[Set[String], Int])(maxUnion)
+      }
+
+    iterate(0, Map(0 -> Map(State("AA", Set.empty) -> 0)))
+  }
+
   @main
   def solution1(): Unit =
-    val graph = mkGraph(input)
-
-    pprint.log(input)
-    val shortest = Graph.shortestPaths(graph)
-    pprint.log(shortest)
+    val max = findMaxPressure(input, 30)
+    pprint.log(max.values.max)
 
 }

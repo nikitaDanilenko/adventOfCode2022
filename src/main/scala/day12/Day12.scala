@@ -1,7 +1,9 @@
 package day12
 
+import utils.Graph
+
 import scala.io.Source
-import scala.util.chaining._
+import scala.util.chaining.*
 
 object Day12 {
 

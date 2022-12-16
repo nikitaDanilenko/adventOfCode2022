@@ -48,6 +48,8 @@ object Graph {
 
   }
 
+  // Floyd-Warshall as simplified A* algorithm, essentially the
+  // implementation used in gwaf.
   def shortestPaths[Node](graph: Graph[Node]): Distances[Node] =
     val initial =
       Distances(

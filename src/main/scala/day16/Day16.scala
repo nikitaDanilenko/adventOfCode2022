@@ -45,7 +45,7 @@ object Day16 {
 
   val input: List[ValveInfo] =
     Source
-      .fromResource("test/day16.txt")
+      .fromResource("real/day16.txt")
       .getLines()
       .flatMap(ValveInfo.parser.parse(_).toOption.map(_._2))
       .toList
@@ -127,5 +127,17 @@ object Day16 {
   def solution1(): Unit =
     val max = findMaxPressure(input, 30)
     pprint.log(max.values.max)
+
+  @main
+  def solution2(): Unit =
+    val pressures = findMaxPressure(input, 26).toVector
+    val combined = for {
+      ((valves1, pressure1), i) <- pressures.zipWithIndex
+      (_, pressure2) <- pressures.drop(1 + i).filter(_._1.intersect(valves1).isEmpty)
+    } yield pressure1 + pressure2
+
+    val max = combined.max
+
+    pprint.log(max)
 
 }

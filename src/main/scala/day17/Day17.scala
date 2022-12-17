@@ -7,7 +7,7 @@ import scala.io.Source
 object Day17 {
 
   val input: List[Direction] = Source
-    .fromResource("test/day17.txt")
+    .fromResource("real/day17.txt")
     .flatMap(c => Direction.parser.parse(s"$c").toOption.map(_._2))
     .toList
 

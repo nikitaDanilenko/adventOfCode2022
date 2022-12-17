@@ -2,6 +2,8 @@ package day17
 
 import utils.Pos
 
+import scala.annotation.tailrec
+
 case class Shape(blocks: Set[Pos])
 
 object Shape {
@@ -11,44 +13,44 @@ object Shape {
 
   val all: List[Label] = Label.values.toList
 
-  def spawn(label: Label, highestY: Int): Shape =
+  def spawn(label: Label, leftX: Int, topY: Int): Shape =
     val blocks = label match
       case Label.HorizontalLine =>
         Set(
-          Pos(2, highestY + 3),
-          Pos(3, highestY + 3),
-          Pos(4, highestY + 3),
-          Pos(5, highestY + 3)
+          Pos(leftX + 2, topY + 4),
+          Pos(leftX + 3, topY + 4),
+          Pos(leftX + 4, topY + 4),
+          Pos(leftX + 5, topY + 4)
         )
       case Label.Cross =>
         Set(
-          Pos(3, highestY + 5),
-          Pos(2, highestY + 4),
-          Pos(3, highestY + 4),
-          Pos(4, highestY + 4),
-          Pos(3, highestY + 3)
+          Pos(leftX + 3, topY + 6),
+          Pos(leftX + 2, topY + 5),
+          Pos(leftX + 3, topY + 5),
+          Pos(leftX + 4, topY + 5),
+          Pos(leftX + 3, topY + 4)
         )
       case Label.Hook =>
         Set(
-          Pos(4, highestY + 5),
-          Pos(4, highestY + 4),
-          Pos(2, highestY + 3),
-          Pos(3, highestY + 3),
-          Pos(4, highestY + 3)
+          Pos(leftX + 4, topY + 6),
+          Pos(leftX + 4, topY + 5),
+          Pos(leftX + 2, topY + 4),
+          Pos(leftX + 3, topY + 4),
+          Pos(leftX + 4, topY + 4)
         )
       case Label.VerticalLine =>
         Set(
-          Pos(2, highestY + 6),
-          Pos(2, highestY + 5),
-          Pos(2, highestY + 4),
-          Pos(2, highestY + 3)
+          Pos(leftX + 2, topY + 7),
+          Pos(leftX + 2, topY + 6),
+          Pos(leftX + 2, topY + 5),
+          Pos(leftX + 2, topY + 4)
         )
       case Label.Block =>
         Set(
-          Pos(2, highestY + 4),
-          Pos(3, highestY + 4),
-          Pos(2, highestY + 3),
-          Pos(3, highestY + 3)
+          Pos(leftX + 2, topY + 5),
+          Pos(leftX + 3, topY + 5),
+          Pos(leftX + 2, topY + 4),
+          Pos(leftX + 3, topY + 4)
         )
     Shape(blocks)
 

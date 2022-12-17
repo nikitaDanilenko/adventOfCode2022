@@ -8,7 +8,8 @@ case class Column(
     minX: Int,
     width: Int,
     blocks: Set[Pos],
-    directions: LazyList[Direction]
+    directions: LazyList[Direction],
+    directionsUsed: Int = 0
 )
 
 object Column {
@@ -27,7 +28,14 @@ object Column {
         Some(Shape.down(horizontallyMoved))
           .filter(s => s.blocks.intersect(column.blocks).isEmpty)
           .fold((horizontallyMoved, false))(_ -> true)
-      (verticallyMoved, dropped, column.copy(directions = ds))
+      (
+        verticallyMoved,
+        dropped,
+        column.copy(
+          directions = ds,
+          directionsUsed = column.directionsUsed + 1
+        )
+      )
 
     @tailrec
     def repeat(shape: Shape, column: Column): (Shape, Column) =
@@ -51,5 +59,17 @@ object Column {
     )
     val nextColumn = drop(shape, column)
     column #:: dropMany(nextShapes, nextColumn)
+
+  def surfaceProfile(column: Column): Set[Pos] =
+    val initial =
+      column.minX
+        .until(column.minX + column.width)
+        .map { x =>
+          val y = column.blocks.collect { case pos if pos.x == x => pos.y }.max
+          Pos(x, y)
+        }
+    val minY = initial.minBy(_.y).y
+    // Normalise so that different heights may yield the same profile
+    initial.map(p => p.copy(y = p.y - minY)).toSet
 
 }

@@ -7,18 +7,18 @@ import scala.util.chaining.*
 
 object Day18 {
 
-  val input: List[Grid3D] =
+  val input: Set[Grid3D] =
     Source
       .fromResource("real/day18.txt")
       .getLines()
       .flatMap(Grid3D.parser.parse(_).toOption.map(_._2))
-      .toList
+      .toSet
 
-  def freeFaces(points: List[Grid3D]): List[Grid3D] =
-    val pointSet = points.toSet
-    points
+  def freeFaces(points: Set[Grid3D]): List[Grid3D] =
+    // Lists, so that duplicates are kept.
+    points.toList
       .flatMap(Grid3D.neighbours(_).toList)
-      .filter(!pointSet.contains(_))
+      .filter(!points.contains(_))
 
   def minToMax(xs: Iterable[Int]): Iterable[Int] =
     if xs.isEmpty then Iterable.empty[Int] else xs.min.to(xs.max)
@@ -26,11 +26,10 @@ object Day18 {
   def minToMaxOverlap(xs: Iterable[Int]): Iterable[Int] =
     if xs.isEmpty then Iterable.empty[Int] else (xs.min - 1).to(xs.max + 1)
 
-  def reachableFromOutside(points: List[Grid3D]): Set[Grid3D] =
+  def reachableFromOutside(points: Set[Grid3D]): Set[Grid3D] =
     val xs = points.map(_.x)
     val ys = points.map(_.y)
     val zs = points.map(_.z)
-    val pointSet = points.toSet
     val initial = Grid3D(
       xs.min - 1,
       ys.min - 1,
@@ -45,7 +44,7 @@ object Day18 {
 
     val graph = cuboid
       .map { g =>
-        g -> Grid3D.neighbours(g).diff(pointSet).toList
+        g -> Grid3D.neighbours(g).diff(points).toList
       }
       .toMap
       .pipe(Graph(_))
@@ -53,9 +52,8 @@ object Day18 {
     // Perform a BFS from there to find all those grid elements that can be reached from outside.
     Graph.layers(from = Set(initial), graph).foldLeft(Set.empty[Grid3D])(_.union(_))
 
-  def unreachableInner(points: List[Grid3D]): Set[Grid3D] =
+  def unreachableInner(points: Set[Grid3D]): Set[Grid3D] =
     val reachable = reachableFromOutside(points)
-    val pointSet = points.toSet
     val zs = points.map(_.z)
     // Traverse layer-wise
     val missing = for {
@@ -68,7 +66,7 @@ object Day18 {
       // and those elements that are missing (i.e. not contained in the point set),
       // and not reachable from outside.
       val xs = zPlane.collect { case p if p.y == y => p.x }
-      minToMax(xs).map(Grid3D(_, y, z)).filter(p => !pointSet.contains(p) && !reachable.contains(p))
+      minToMax(xs).map(Grid3D(_, y, z)).filter(p => !points.contains(p) && !reachable.contains(p))
     }
     missing.flatten.toSet
 
@@ -80,7 +78,7 @@ object Day18 {
   @main
   def solution2(): Unit =
     val unreachable = unreachableInner(input)
-    val total = freeFaces(input).size - freeFaces(unreachable.toList).size
+    val total = freeFaces(input).size - freeFaces(unreachable).size
     pprint.log(total)
 
 }

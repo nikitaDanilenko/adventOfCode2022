@@ -5,7 +5,7 @@ import scala.io.Source
 object Day20 {
 
   val input: List[Int] = Source
-    .fromResource("test/day20.txt")
+    .fromResource("real/day20.txt")
     .getLines()
     .map(_.toInt)
     .toList
@@ -27,11 +27,14 @@ object Day20 {
     val newIndex = wrapIndex(positionalIndex, listSize, value)
     insertAtIndex(newIndex, (value, index), listWithoutIndex)
 
-  def iteratedMove(initial: List[Long], listSize: Int): List[Long] =
+  def iteratedMove(initial: List[Long], listSize: Int, repetitions: Int): List[Long] =
     val indexedInitial = initial.zipWithIndex
-    indexedInitial
-      .foldLeft(indexedInitial) { case (moved, (value, index)) =>
-        moveValue(value, index, moved, listSize)
+    1.to(repetitions)
+      .foldLeft(indexedInitial) { (mixed, _) =>
+        indexedInitial
+          .foldLeft(mixed) { case (moved, (value, index)) =>
+            moveValue(value, index, moved, listSize)
+          }
       }
       .map(_._1)
 
@@ -45,14 +48,12 @@ object Day20 {
   def solution1(): Unit =
     val initial = input.map(_.toLong)
     val size = initial.size
-    pprint.log(findCoordinates(iteratedMove(initial, size), size))
+    pprint.log(findCoordinates(iteratedMove(initial, size, 1), size))
 
-//  @main
-//  def solution2(): Unit =
-//    val initial = input.map(_ * 811589153L)
-//    val size = initial.size
-//    val mixed = 1.to(10).foldLeft(initial)((xs, _) => iteratedMove(xs, size))
-//    val result = findCoordinates(mixed, size)
-//    pprint.log(result)
+  @main
+  def solution2(): Unit =
+    val initial = input.map(_ * 811589153L)
+    val size = initial.size
+    pprint.log(findCoordinates(iteratedMove(initial, size, 10), size))
 
 }

@@ -61,15 +61,14 @@ object Day21 {
     val m2 = findMonkeyByName(x2)
     val initial = input.collect { case Monkey.Number(name, value) =>
       val polynomial =
-        if name == "humn" then Poly.Linear(Rational(1), Rational(0)) else Poly.Constant(Rational(value))
+        if name == "humn" then Polynomial.linear(Rational(1)) else Polynomial.constant(Rational(value))
       name -> polynomial
     }.toMap
-    val p1 = evaluate[Poly](input, m1).run(initial).value._2
-    val p2 = evaluate[Poly](input, m2).run(initial).value._2
+    val p1 = evaluate[Polynomial[Rational]](input, m1).run(initial).value._2
+    val p2 = evaluate[Polynomial[Rational]](input, m2).run(initial).value._2
 
-    val equation = List(p1, p2).collectFirst { case l: Poly.Linear => l }.get
-    val constant = List(p1, p2).collectFirst { case c: Poly.Constant => c }.get
-    val result = (constant.c0 - equation.c0) / equation.c1
+    val (equation, constant) = if p1.maxTerm.exp > p2.maxTerm.exp then (p1, p2) else (p2, p1)
+    val result = (constant.coeffsArray.apply(0) - equation.coeffsArray.apply(0)) / equation.coeffsArray.apply(1)
     pprint.log(result)
 
 

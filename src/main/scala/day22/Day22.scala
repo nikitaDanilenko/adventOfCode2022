@@ -28,6 +28,11 @@ object Day22 {
     Input(areaMap, instructions)
   }
 
+  def goOrStop(areaMap: AreaMap, pos: Pos, newPosition: Pos): Pos =
+    areaMap(newPosition) match
+      case AreaType.Free => newPosition
+      case AreaType.Wall => pos
+
   def move(
       areaMap: AreaMap,
       location: Location,
@@ -37,43 +42,32 @@ object Day22 {
     lazy val ys = areaMap.collect { case (pos, _) if pos.x == location.pos.x => pos.y }
     instruction match
       case Instruction.Move(units) =>
-        location.facingDirection match
+        val newPosition = location.facingDirection match
           case FacingDirection.L =>
-            val newPosition = 1.to(units).foldLeft(location.pos) { (pos, _) =>
+            1.to(units).foldLeft(location.pos) { (pos, _) =>
               val xCandidate = if pos.x - 1 >= xs.min then pos.x - 1 else xs.max
               val newPos = pos.copy(x = xCandidate)
-              areaMap(newPos) match
-                case AreaType.Free => newPos
-                case AreaType.Wall => pos
+              goOrStop(areaMap, pos, newPos)
             }
-            location.copy(pos = newPosition)
           case FacingDirection.R =>
-            val newPosition = 1.to(units).foldLeft(location.pos) { (pos, _) =>
+            1.to(units).foldLeft(location.pos) { (pos, _) =>
               val xCandidate = if pos.x + 1 <= xs.max then pos.x + 1 else xs.min
               val newPos = pos.copy(x = xCandidate)
-              areaMap(newPos) match
-                case AreaType.Free => newPos
-                case AreaType.Wall => pos
+              goOrStop(areaMap, pos, newPos)
             }
-            location.copy(pos = newPosition)
           case FacingDirection.U =>
-            val newPosition = 1.to(units).foldLeft(location.pos) { (pos, _) =>
+            1.to(units).foldLeft(location.pos) { (pos, _) =>
               val yCandidate = if pos.y - 1 >= ys.min then pos.y - 1 else ys.max
               val newPos = pos.copy(y = yCandidate)
-              areaMap(newPos) match
-                case AreaType.Free => newPos
-                case AreaType.Wall => pos
+              goOrStop(areaMap, pos, newPos)
             }
-            location.copy(pos = newPosition)
           case FacingDirection.D =>
-            val newPosition = 1.to(units).foldLeft(location.pos) { (pos, _) =>
+            1.to(units).foldLeft(location.pos) { (pos, _) =>
               val yCandidate = if pos.y + 1 <= ys.max then pos.y + 1 else ys.min
               val newPos = pos.copy(y = yCandidate)
-              areaMap(newPos) match
-                case AreaType.Free => newPos
-                case AreaType.Wall => pos
+              goOrStop(areaMap, pos, newPos)
             }
-            location.copy(pos = newPosition)
+        location.copy(pos = newPosition)
       case Instruction.Rotate(rotatingDirection) =>
         location.copy(
           facingDirection = FacingDirection.rotate(location.facingDirection, rotatingDirection)
@@ -120,22 +114,216 @@ object Day22 {
       .toMap
   }
 
+  // Argument: Side, and the direction in which the side is left.
+  // Result: Neighbouring side and the direction where the side is entered.
+  type Connections = Map[(CubeSide, FacingDirection), (CubeSide, FacingDirection)]
+
+  def goOrStopCube(cubeMap: CubeMap, cubeLocation: CubeLocation, newCubeLocation: CubeLocation): CubeLocation =
+    cubeMap(newCubeLocation.cubeSide)(newCubeLocation.location.pos) match
+      case AreaType.Free => newCubeLocation
+      case AreaType.Wall => cubeLocation
+
   def moveCube(
       cubeMap: CubeMap,
       cubeLocation: CubeLocation,
       instruction: Instruction,
-      cubeSize: Int
+      cubeSize: Int,
+      connections: Connections
   ): CubeLocation = {
+    lazy val xs = cubeMap(cubeLocation.cubeSide).collect {
+      case (pos, _) if pos.y == cubeLocation.location.pos.y => pos.x
+    }
+    lazy val ys = cubeMap(cubeLocation.cubeSide).collect {
+      case (pos, _) if pos.x == cubeLocation.location.pos.x => pos.y
+    }
     instruction match
       case Instruction.Move(units) =>
-        ???
+        cubeLocation.location.facingDirection match
+          case FacingDirection.L =>
+            1.to(units).foldLeft(cubeLocation) { (cl, _) =>
+              val newLocation =
+                if cl.location.pos.x - 1 >= 0 then
+                  cl.copy(
+                    location = cl.location.copy(
+                      pos = cl.location.pos.copy(x = cl.location.pos.x - 1)
+                    )
+                  )
+                else {
+                  val (neighbourSide, direction) = connections(cl.cubeSide, cubeLocation.location.facingDirection)
+                  val newPos = direction match
+                    case FacingDirection.L =>
+                      Pos(
+                        x = cubeSize,
+                        y = cl.location.pos.y
+                      )
+                    case FacingDirection.R =>
+                      Pos(
+                        x = 0,
+                        y = ys.max - cl.location.pos.y
+                      )
+                    case FacingDirection.U =>
+                      Pos(
+                        x = cubeSize - cl.location.pos.y,
+                        y = ys.max
+                      )
+                    case FacingDirection.D =>
+                      Pos(
+                        x = cl.location.pos.y,
+                        y = ys.min
+                      )
+                  CubeLocation(
+                    neighbourSide,
+                    location = Location(
+                      newPos,
+                      direction
+                    )
+                  )
+                }
+              goOrStopCube(cubeMap, cubeLocation, newLocation)
+            }
+          case FacingDirection.R =>
+            1.to(units).foldLeft(cubeLocation) { (cl, _) =>
+              val newLocation =
+                if cl.location.pos.x + 1 <= cubeSize then
+                  cl.copy(
+                    location = cl.location.copy(
+                      pos = cl.location.pos.copy(x = cl.location.pos.x + 1)
+                    )
+                  )
+                else {
+                  val (neighbourSide, direction) = connections(cl.cubeSide, cubeLocation.location.facingDirection)
+                  val newPos = direction match
+                    case FacingDirection.L =>
+                      Pos(
+                        x = cubeSize,
+                        y = cubeSize - cl.location.pos.y
+                      )
+                    case FacingDirection.R =>
+                      Pos(
+                        x = 0,
+                        y = cl.location.pos.y
+                      )
+                    case FacingDirection.U =>
+                      Pos(
+                        x = cl.location.pos.y,
+                        y = cubeSize
+                      )
+                    case FacingDirection.D =>
+                      Pos(
+                        x = cubeSize - cl.location.pos.y,
+                        y = 0
+                      )
+                  CubeLocation(
+                    neighbourSide,
+                    location = Location(
+                      newPos,
+                      direction
+                    )
+                  )
+                }
+              goOrStopCube(cubeMap, cubeLocation, newLocation)
+            }
+          case FacingDirection.U =>
+            1.to(units).foldLeft(cubeLocation) { (cl, _) =>
+              val newLocation =
+                if cl.location.pos.y - 1 >= 0 then
+                  cl.copy(
+                    location = cl.location.copy(
+                      pos = cl.location.pos.copy(y = cl.location.pos.y - 1)
+                    )
+                  )
+                else {
+                  val (neighbourSide, direction) = connections(cl.cubeSide, cubeLocation.location.facingDirection)
+                  val newPos = direction match
+                    case FacingDirection.L =>
+                      Pos(
+                        x = 0,
+                        y = cl.location.pos.x
+                      )
+                    case FacingDirection.R =>
+                      Pos(
+                        x = cubeSize,
+                        y = cubeSize - cl.location.pos.x
+                      )
+                    case FacingDirection.U =>
+                      Pos(
+                        x = cl.location.pos.x,
+                        y = cubeSize
+                      )
+                    case FacingDirection.D =>
+                      Pos(
+                        x = cubeSize - cl.location.pos.x,
+                        y = 0
+                      )
+                  CubeLocation(
+                    neighbourSide,
+                    location = Location(
+                      newPos,
+                      direction
+                    )
+                  )
+                }
+              goOrStopCube(cubeMap, cubeLocation, newLocation)
+            }
+          case FacingDirection.D =>
+            1.to(units).foldLeft(cubeLocation) { (cl, _) =>
+              val newLocation =
+                if cl.location.pos.y + 1 <= 0 then
+                  cl.copy(
+                    location = cl.location.copy(
+                      pos = cl.location.pos.copy(y = cl.location.pos.y + 1)
+                    )
+                  )
+                else {
+                  val (neighbourSide, direction) = connections(cl.cubeSide, cubeLocation.location.facingDirection)
+                  val newPos = direction match
+                    case FacingDirection.L =>
+                      Pos(
+                        x = cubeSize,
+                        y = cl.location.pos.x
+                      )
+                    case FacingDirection.R =>
+                      Pos(
+                        x = 0,
+                        y = cubeSize - cl.location.pos.x
+                      )
+                    case FacingDirection.U =>
+                      Pos(
+                        x = cubeSize - cl.location.pos.x,
+                        y = cubeSize
+                      )
+                    case FacingDirection.D =>
+                      Pos(
+                        x = cl.location.pos.x,
+                        y = 0
+                      )
+                  CubeLocation(
+                    neighbourSide,
+                    location = Location(
+                      newPos,
+                      direction
+                    )
+                  )
+                }
+              goOrStopCube(cubeMap, cubeLocation, newLocation)
+            }
+
       case Instruction.Rotate(rotatingDirection) =>
         cubeLocation.copy(
-          location = cubeLocation.copy(
-            facingDirection = FacingDirection.rotate(location.facingDirection, rotatingDirection)
+          location = cubeLocation.location.copy(
+            facingDirection = FacingDirection.rotate(cubeLocation.location.facingDirection, rotatingDirection)
           )
         )
   }
+
+  def iteratedMoveCube(
+      cubeMap: CubeMap,
+      start: CubeLocation,
+      instructions: List[Instruction],
+      connections: Connections
+  ): CubeLocation =
+    val size = cubeMap(CubeSide.S0).keySet.map(_.x).size
+    instructions.foldLeft(start)(moveCube(cubeMap, _, _, size, connections))
 
   def password(location: Location): Int =
     // offset positions, only relevant here

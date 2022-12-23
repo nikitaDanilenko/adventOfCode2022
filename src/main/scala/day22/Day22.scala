@@ -91,6 +91,52 @@ object Day22 {
       FacingDirection.R
     )
 
+  type CubeMap = Map[CubeSide, AreaMap]
+
+  def cubeInput(
+      sideSize: Int,
+      order: List[List[CubeSide]]
+  ): CubeMap = {
+    Source
+      .fromResource("test/day22.txt")
+      .getLines()
+      .takeWhile(_.nonEmpty)
+      .grouped(sideSize)
+      .toList
+      .map(
+        _.map(
+          _.grouped(sideSize)
+            .filter(_.trim.nonEmpty)
+            .toList
+        ).toList.transpose
+          .map(_.map(_.zipWithIndex).zipWithIndex.flatMap { case (line, j) =>
+            line.flatMap((c, i) => AreaType.parser.parse(s"$c").toOption.map(_._2).map(Pos(i, j) -> _))
+          }.toMap)
+      )
+      .zip(order)
+      .flatMap { (maps, sides) =>
+        maps.zip(sides).map { case (map, side) => side -> map }
+      }
+      .toMap
+  }
+
+  def moveCube(
+      cubeMap: CubeMap,
+      cubeLocation: CubeLocation,
+      instruction: Instruction,
+      cubeSize: Int
+  ): CubeLocation = {
+    instruction match
+      case Instruction.Move(units) =>
+        ???
+      case Instruction.Rotate(rotatingDirection) =>
+        cubeLocation.copy(
+          location = cubeLocation.copy(
+            facingDirection = FacingDirection.rotate(location.facingDirection, rotatingDirection)
+          )
+        )
+  }
+
   def password(location: Location): Int =
     // offset positions, only relevant here
     1000 * (location.pos.y + 1) + 4 * (location.pos.x + 1) + FacingDirection.passwordValue(location.facingDirection)
@@ -101,5 +147,11 @@ object Day22 {
     val finalLocation = iteratedMove(input.areaMap, start, input.instructions)
     val result = password(finalLocation)
     pprint.log(result)
+
+  @main
+  def solution2(): Unit =
+    val ci =
+      cubeInput(4, List(List(CubeSide.S0), List(CubeSide.S4, CubeSide.S3, CubeSide.S5), List(CubeSide.S2, CubeSide.S1)))
+    pprint.log(ci)
 
 }

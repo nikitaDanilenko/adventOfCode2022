@@ -13,7 +13,7 @@ object Day22 {
       instructions: List[Instruction]
   )
 
-  val inputLocation: String = "test/day22.txt"
+  val inputLocation: String = "real/day22.txt"
 
   val input: Input = {
     val lines = Source.fromResource(inputLocation).getLines()
@@ -328,18 +328,21 @@ object Day22 {
     val result = password(finalLocation)
     pprint.log(result)
 
-  @main
-  def solution2(): Unit =
-    val sideSize = 4
-    val schema = List(List(CubeSide.S0), List(CubeSide.S4, CubeSide.S3, CubeSide.S5), List(CubeSide.S2, CubeSide.S1))
-    val cubeMap = cubeInput(sideSize, schema)
-    val start = CubeLocation(
-      cubeSide = CubeSide.S0,
-      location = startOf(cubeMap(CubeSide.S0))
-    )
+  // These parameters can be computed, but the corresponding algorithm is non-trivial,
+  // and more complex than necessary for the scope of the given task.
+  case class ManualParameters(
+      schema: List[List[CubeSide]],
+      connections: Connections,
+      cubeSize: Int
+  )
 
-    // Test
-    val connections: Connections = Map(
+  val testManualParameters: ManualParameters = ManualParameters(
+    schema = List(
+      List(CubeSide.S0),
+      List(CubeSide.S4, CubeSide.S3, CubeSide.S5),
+      List(CubeSide.S2, CubeSide.S1)
+    ),
+    connections = Map(
       (CubeSide.S0, FacingDirection.L) -> (CubeSide.S3, FacingDirection.D),
       (CubeSide.S0, FacingDirection.R) -> (CubeSide.S1, FacingDirection.L),
       (CubeSide.S0, FacingDirection.U) -> (CubeSide.S4, FacingDirection.D),
@@ -364,16 +367,59 @@ object Day22 {
       (CubeSide.S5, FacingDirection.R) -> (CubeSide.S1, FacingDirection.D),
       (CubeSide.S5, FacingDirection.U) -> (CubeSide.S0, FacingDirection.U),
       (CubeSide.S5, FacingDirection.D) -> (CubeSide.S2, FacingDirection.D)
-    )
-    // Real
-//    val connections: Connections = Map(
-//
-//    )
+    ),
+    cubeSize = 4
+  )
 
-    val finalLocation = iteratedMoveCube(cubeMap, start, input.instructions, connections)
+  val realManualParameters: ManualParameters = ManualParameters(
+    schema = List(
+      List(CubeSide.S0, CubeSide.S1),
+      List(CubeSide.S5),
+      List(CubeSide.S3, CubeSide.S2),
+      List(CubeSide.S4)
+    ),
+    connections = Map(
+      (CubeSide.S0, FacingDirection.L) -> (CubeSide.S3, FacingDirection.R),
+      (CubeSide.S0, FacingDirection.R) -> (CubeSide.S1, FacingDirection.R),
+      (CubeSide.S0, FacingDirection.U) -> (CubeSide.S4, FacingDirection.R),
+      (CubeSide.S0, FacingDirection.D) -> (CubeSide.S5, FacingDirection.D),
+      (CubeSide.S1, FacingDirection.L) -> (CubeSide.S0, FacingDirection.L),
+      (CubeSide.S1, FacingDirection.R) -> (CubeSide.S2, FacingDirection.L),
+      (CubeSide.S1, FacingDirection.U) -> (CubeSide.S4, FacingDirection.U),
+      (CubeSide.S1, FacingDirection.D) -> (CubeSide.S5, FacingDirection.L),
+      (CubeSide.S2, FacingDirection.L) -> (CubeSide.S3, FacingDirection.L),
+      (CubeSide.S2, FacingDirection.R) -> (CubeSide.S1, FacingDirection.L),
+      (CubeSide.S2, FacingDirection.U) -> (CubeSide.S5, FacingDirection.U),
+      (CubeSide.S2, FacingDirection.D) -> (CubeSide.S4, FacingDirection.L),
+      (CubeSide.S3, FacingDirection.L) -> (CubeSide.S0, FacingDirection.R),
+      (CubeSide.S3, FacingDirection.R) -> (CubeSide.S2, FacingDirection.R),
+      (CubeSide.S3, FacingDirection.U) -> (CubeSide.S5, FacingDirection.R),
+      (CubeSide.S3, FacingDirection.D) -> (CubeSide.S4, FacingDirection.D),
+      (CubeSide.S4, FacingDirection.L) -> (CubeSide.S0, FacingDirection.D),
+      (CubeSide.S4, FacingDirection.R) -> (CubeSide.S2, FacingDirection.U),
+      (CubeSide.S4, FacingDirection.U) -> (CubeSide.S3, FacingDirection.U),
+      (CubeSide.S4, FacingDirection.D) -> (CubeSide.S1, FacingDirection.D),
+      (CubeSide.S5, FacingDirection.L) -> (CubeSide.S3, FacingDirection.D),
+      (CubeSide.S5, FacingDirection.R) -> (CubeSide.S1, FacingDirection.U),
+      (CubeSide.S5, FacingDirection.U) -> (CubeSide.S0, FacingDirection.U),
+      (CubeSide.S5, FacingDirection.D) -> (CubeSide.S2, FacingDirection.D)
+    ),
+    cubeSize = 50
+  )
+
+  @main
+  def solution2(): Unit =
+    val manualParameters = realManualParameters
+    val cubeMap = cubeInput(manualParameters.cubeSize, manualParameters.schema)
+    val start = CubeLocation(
+      cubeSide = CubeSide.S0,
+      location = startOf(cubeMap(CubeSide.S0))
+    )
+
+    val finalLocation = iteratedMoveCube(cubeMap, start, input.instructions, manualParameters.connections)
     pprint.log(finalLocation)
     val (xOffset, yOffset) =
-      schema
+      manualParameters.schema
         .map(_.zipWithIndex)
         .zipWithIndex
         .flatMap { case (line, y) => line.map { case (s, x) => (x, y) -> s } }
@@ -382,8 +428,8 @@ object Day22 {
         ._1
     val resetFinalPosition = finalLocation.location.copy(
       pos = finalLocation.location.pos.copy(
-        x = finalLocation.location.pos.x + xOffset * sideSize,
-        y = finalLocation.location.pos.y + yOffset * sideSize
+        x = finalLocation.location.pos.x + xOffset * manualParameters.cubeSize,
+        y = finalLocation.location.pos.y + yOffset * manualParameters.cubeSize
       )
     )
     pprint.log(resetFinalPosition)

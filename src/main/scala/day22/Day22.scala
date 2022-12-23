@@ -13,8 +13,10 @@ object Day22 {
       instructions: List[Instruction]
   )
 
+  val inputLocation: String = "test/day22.txt"
+
   val input: Input = {
-    val lines = Source.fromResource("real/day22.txt").getLines()
+    val lines = Source.fromResource(inputLocation).getLines()
     val (map, is) = lines.span(_.nonEmpty)
     val instructions = Instruction.parser.rep.parse(is.toList.drop(1).head).toOption.get._2.toList
     val areaMap = map
@@ -92,7 +94,7 @@ object Day22 {
       order: List[List[CubeSide]]
   ): CubeMap = {
     Source
-      .fromResource("test/day22.txt")
+      .fromResource(inputLocation)
       .getLines()
       .takeWhile(_.nonEmpty)
       .grouped(sideSize)
@@ -123,6 +125,166 @@ object Day22 {
       case AreaType.Free => newCubeLocation
       case AreaType.Wall => cubeLocation
 
+  def stepCube(
+      cubeMap: CubeMap,
+      cubeLocation: CubeLocation,
+      maxSize: Int,
+      connections: Connections
+  ): CubeLocation =
+    lazy val (neighbourSide, direction) = connections(cubeLocation.cubeSide, cubeLocation.location.facingDirection)
+    val newLocation =
+      cubeLocation.location.facingDirection match
+        case FacingDirection.L =>
+          if cubeLocation.location.pos.x - 1 >= 0 then
+            cubeLocation.copy(
+              location = cubeLocation.location.copy(
+                pos = cubeLocation.location.pos.copy(x = cubeLocation.location.pos.x - 1)
+              )
+            )
+          else {
+
+            val newPos = direction match
+              case FacingDirection.L =>
+                Pos(
+                  x = maxSize,
+                  y = cubeLocation.location.pos.y
+                )
+              case FacingDirection.R =>
+                Pos(
+                  x = 0,
+                  y = maxSize - cubeLocation.location.pos.y
+                )
+              case FacingDirection.U =>
+                Pos(
+                  x = cubeLocation.location.pos.y,
+                  y = maxSize
+                )
+              case FacingDirection.D =>
+                Pos(
+                  x = cubeLocation.location.pos.y,
+                  y = 0
+                )
+            CubeLocation(
+              neighbourSide,
+              location = Location(
+                newPos,
+                direction
+              )
+            )
+          }
+        case FacingDirection.R =>
+          if cubeLocation.location.pos.x + 1 <= maxSize then
+            cubeLocation.copy(
+              location = cubeLocation.location.copy(
+                pos = cubeLocation.location.pos.copy(x = cubeLocation.location.pos.x + 1)
+              )
+            )
+          else {
+            val newPos = direction match
+              case FacingDirection.L =>
+                Pos(
+                  x = maxSize,
+                  y = maxSize - cubeLocation.location.pos.y
+                )
+              case FacingDirection.R =>
+                Pos(
+                  x = 0,
+                  y = cubeLocation.location.pos.y
+                )
+              case FacingDirection.U =>
+                Pos(
+                  x = cubeLocation.location.pos.y,
+                  y = maxSize
+                )
+              case FacingDirection.D =>
+                Pos(
+                  x = maxSize - cubeLocation.location.pos.y,
+                  y = 0
+                )
+            CubeLocation(
+              neighbourSide,
+              location = Location(
+                newPos,
+                direction
+              )
+            )
+          }
+        case FacingDirection.U =>
+          if cubeLocation.location.pos.y - 1 >= 0 then
+            cubeLocation.copy(
+              location = cubeLocation.location.copy(
+                pos = cubeLocation.location.pos.copy(y = cubeLocation.location.pos.y - 1)
+              )
+            )
+          else {
+            val newPos = direction match
+              case FacingDirection.L =>
+                Pos(
+                  x = maxSize,
+                  y = maxSize - cubeLocation.location.pos.x
+                )
+              case FacingDirection.R =>
+                Pos(
+                  x = 0,
+                  y = cubeLocation.location.pos.x
+                )
+              case FacingDirection.U =>
+                Pos(
+                  x = cubeLocation.location.pos.x,
+                  y = maxSize
+                )
+              case FacingDirection.D =>
+                Pos(
+                  x = maxSize - cubeLocation.location.pos.x,
+                  y = 0
+                )
+            CubeLocation(
+              neighbourSide,
+              location = Location(
+                newPos,
+                direction
+              )
+            )
+          }
+        case FacingDirection.D =>
+          if cubeLocation.location.pos.y + 1 <= maxSize then
+            cubeLocation.copy(
+              location = cubeLocation.location.copy(
+                pos = cubeLocation.location.pos.copy(y = cubeLocation.location.pos.y + 1)
+              )
+            )
+          else {
+            val newPos = direction match
+              case FacingDirection.L =>
+                Pos(
+                  x = maxSize,
+                  y = cubeLocation.location.pos.x
+                )
+              case FacingDirection.R =>
+                Pos(
+                  x = 0,
+                  y = maxSize - cubeLocation.location.pos.x
+                )
+              case FacingDirection.U =>
+                Pos(
+                  x = maxSize - cubeLocation.location.pos.x,
+                  y = maxSize
+                )
+              case FacingDirection.D =>
+                Pos(
+                  x = cubeLocation.location.pos.x,
+                  y = 0
+                )
+            CubeLocation(
+              neighbourSide,
+              location = Location(
+                newPos,
+                direction
+              )
+            )
+          }
+    goOrStopCube(cubeMap, cubeLocation, newLocation)
+
   def moveCube(
       cubeMap: CubeMap,
       cubeLocation: CubeLocation,
@@ -130,183 +292,11 @@ object Day22 {
       cubeSize: Int,
       connections: Connections
   ): CubeLocation = {
-    lazy val xs = cubeMap(cubeLocation.cubeSide).collect {
-      case (pos, _) if pos.y == cubeLocation.location.pos.y => pos.x
-    }
-    lazy val ys = cubeMap(cubeLocation.cubeSide).collect {
-      case (pos, _) if pos.x == cubeLocation.location.pos.x => pos.y
-    }
     instruction match
       case Instruction.Move(units) =>
-        cubeLocation.location.facingDirection match
-          case FacingDirection.L =>
-            1.to(units).foldLeft(cubeLocation) { (cl, _) =>
-              val newLocation =
-                if cl.location.pos.x - 1 >= 0 then
-                  cl.copy(
-                    location = cl.location.copy(
-                      pos = cl.location.pos.copy(x = cl.location.pos.x - 1)
-                    )
-                  )
-                else {
-                  val (neighbourSide, direction) = connections(cl.cubeSide, cubeLocation.location.facingDirection)
-                  val newPos = direction match
-                    case FacingDirection.L =>
-                      Pos(
-                        x = cubeSize,
-                        y = cl.location.pos.y
-                      )
-                    case FacingDirection.R =>
-                      Pos(
-                        x = 0,
-                        y = ys.max - cl.location.pos.y
-                      )
-                    case FacingDirection.U =>
-                      Pos(
-                        x = cubeSize - cl.location.pos.y,
-                        y = ys.max
-                      )
-                    case FacingDirection.D =>
-                      Pos(
-                        x = cl.location.pos.y,
-                        y = ys.min
-                      )
-                  CubeLocation(
-                    neighbourSide,
-                    location = Location(
-                      newPos,
-                      direction
-                    )
-                  )
-                }
-              goOrStopCube(cubeMap, cubeLocation, newLocation)
-            }
-          case FacingDirection.R =>
-            1.to(units).foldLeft(cubeLocation) { (cl, _) =>
-              val newLocation =
-                if cl.location.pos.x + 1 <= cubeSize then
-                  cl.copy(
-                    location = cl.location.copy(
-                      pos = cl.location.pos.copy(x = cl.location.pos.x + 1)
-                    )
-                  )
-                else {
-                  val (neighbourSide, direction) = connections(cl.cubeSide, cubeLocation.location.facingDirection)
-                  val newPos = direction match
-                    case FacingDirection.L =>
-                      Pos(
-                        x = cubeSize,
-                        y = cubeSize - cl.location.pos.y
-                      )
-                    case FacingDirection.R =>
-                      Pos(
-                        x = 0,
-                        y = cl.location.pos.y
-                      )
-                    case FacingDirection.U =>
-                      Pos(
-                        x = cl.location.pos.y,
-                        y = cubeSize
-                      )
-                    case FacingDirection.D =>
-                      Pos(
-                        x = cubeSize - cl.location.pos.y,
-                        y = 0
-                      )
-                  CubeLocation(
-                    neighbourSide,
-                    location = Location(
-                      newPos,
-                      direction
-                    )
-                  )
-                }
-              goOrStopCube(cubeMap, cubeLocation, newLocation)
-            }
-          case FacingDirection.U =>
-            1.to(units).foldLeft(cubeLocation) { (cl, _) =>
-              val newLocation =
-                if cl.location.pos.y - 1 >= 0 then
-                  cl.copy(
-                    location = cl.location.copy(
-                      pos = cl.location.pos.copy(y = cl.location.pos.y - 1)
-                    )
-                  )
-                else {
-                  val (neighbourSide, direction) = connections(cl.cubeSide, cubeLocation.location.facingDirection)
-                  val newPos = direction match
-                    case FacingDirection.L =>
-                      Pos(
-                        x = 0,
-                        y = cl.location.pos.x
-                      )
-                    case FacingDirection.R =>
-                      Pos(
-                        x = cubeSize,
-                        y = cubeSize - cl.location.pos.x
-                      )
-                    case FacingDirection.U =>
-                      Pos(
-                        x = cl.location.pos.x,
-                        y = cubeSize
-                      )
-                    case FacingDirection.D =>
-                      Pos(
-                        x = cubeSize - cl.location.pos.x,
-                        y = 0
-                      )
-                  CubeLocation(
-                    neighbourSide,
-                    location = Location(
-                      newPos,
-                      direction
-                    )
-                  )
-                }
-              goOrStopCube(cubeMap, cubeLocation, newLocation)
-            }
-          case FacingDirection.D =>
-            1.to(units).foldLeft(cubeLocation) { (cl, _) =>
-              val newLocation =
-                if cl.location.pos.y + 1 <= 0 then
-                  cl.copy(
-                    location = cl.location.copy(
-                      pos = cl.location.pos.copy(y = cl.location.pos.y + 1)
-                    )
-                  )
-                else {
-                  val (neighbourSide, direction) = connections(cl.cubeSide, cubeLocation.location.facingDirection)
-                  val newPos = direction match
-                    case FacingDirection.L =>
-                      Pos(
-                        x = cubeSize,
-                        y = cl.location.pos.x
-                      )
-                    case FacingDirection.R =>
-                      Pos(
-                        x = 0,
-                        y = cubeSize - cl.location.pos.x
-                      )
-                    case FacingDirection.U =>
-                      Pos(
-                        x = cubeSize - cl.location.pos.x,
-                        y = cubeSize
-                      )
-                    case FacingDirection.D =>
-                      Pos(
-                        x = cl.location.pos.x,
-                        y = 0
-                      )
-                  CubeLocation(
-                    neighbourSide,
-                    location = Location(
-                      newPos,
-                      direction
-                    )
-                  )
-                }
-              goOrStopCube(cubeMap, cubeLocation, newLocation)
-            }
+        1.to(units).foldLeft(cubeLocation) { (currentCubeLocation, _) =>
+          stepCube(cubeMap, currentCubeLocation, cubeSize - 1, connections)
+        }
 
       case Instruction.Rotate(rotatingDirection) =>
         cubeLocation.copy(
@@ -323,7 +313,9 @@ object Day22 {
       connections: Connections
   ): CubeLocation =
     val size = cubeMap(CubeSide.S0).keySet.map(_.x).size
-    instructions.foldLeft(start)(moveCube(cubeMap, _, _, size, connections))
+    instructions.foldLeft(start) { (pos, instruction) =>
+      moveCube(cubeMap, pos, instruction, size, connections)
+    }
 
   def password(location: Location): Int =
     // offset positions, only relevant here
@@ -338,8 +330,64 @@ object Day22 {
 
   @main
   def solution2(): Unit =
-    val ci =
-      cubeInput(4, List(List(CubeSide.S0), List(CubeSide.S4, CubeSide.S3, CubeSide.S5), List(CubeSide.S2, CubeSide.S1)))
-    pprint.log(ci)
+    val sideSize = 4
+    val schema = List(List(CubeSide.S0), List(CubeSide.S4, CubeSide.S3, CubeSide.S5), List(CubeSide.S2, CubeSide.S1))
+    val cubeMap = cubeInput(sideSize, schema)
+    val start = CubeLocation(
+      cubeSide = CubeSide.S0,
+      location = startOf(cubeMap(CubeSide.S0))
+    )
+
+    // Test
+    val connections: Connections = Map(
+      (CubeSide.S0, FacingDirection.L) -> (CubeSide.S3, FacingDirection.D),
+      (CubeSide.S0, FacingDirection.R) -> (CubeSide.S1, FacingDirection.L),
+      (CubeSide.S0, FacingDirection.U) -> (CubeSide.S4, FacingDirection.D),
+      (CubeSide.S0, FacingDirection.D) -> (CubeSide.S5, FacingDirection.D),
+      (CubeSide.S1, FacingDirection.L) -> (CubeSide.S2, FacingDirection.L),
+      (CubeSide.S1, FacingDirection.R) -> (CubeSide.S0, FacingDirection.L),
+      (CubeSide.S1, FacingDirection.U) -> (CubeSide.S5, FacingDirection.L),
+      (CubeSide.S1, FacingDirection.D) -> (CubeSide.S4, FacingDirection.R),
+      (CubeSide.S2, FacingDirection.L) -> (CubeSide.S3, FacingDirection.U),
+      (CubeSide.S2, FacingDirection.R) -> (CubeSide.S1, FacingDirection.R),
+      (CubeSide.S2, FacingDirection.U) -> (CubeSide.S5, FacingDirection.U),
+      (CubeSide.S2, FacingDirection.D) -> (CubeSide.S4, FacingDirection.U),
+      (CubeSide.S3, FacingDirection.L) -> (CubeSide.S4, FacingDirection.L),
+      (CubeSide.S3, FacingDirection.R) -> (CubeSide.S5, FacingDirection.R),
+      (CubeSide.S3, FacingDirection.U) -> (CubeSide.S0, FacingDirection.R),
+      (CubeSide.S3, FacingDirection.D) -> (CubeSide.S2, FacingDirection.R),
+      (CubeSide.S4, FacingDirection.L) -> (CubeSide.S1, FacingDirection.U),
+      (CubeSide.S4, FacingDirection.R) -> (CubeSide.S3, FacingDirection.R),
+      (CubeSide.S4, FacingDirection.U) -> (CubeSide.S0, FacingDirection.D),
+      (CubeSide.S4, FacingDirection.D) -> (CubeSide.S2, FacingDirection.U),
+      (CubeSide.S5, FacingDirection.L) -> (CubeSide.S3, FacingDirection.L),
+      (CubeSide.S5, FacingDirection.R) -> (CubeSide.S1, FacingDirection.D),
+      (CubeSide.S5, FacingDirection.U) -> (CubeSide.S0, FacingDirection.U),
+      (CubeSide.S5, FacingDirection.D) -> (CubeSide.S2, FacingDirection.D)
+    )
+    // Real
+//    val connections: Connections = Map(
+//
+//    )
+
+    val finalLocation = iteratedMoveCube(cubeMap, start, input.instructions, connections)
+    pprint.log(finalLocation)
+    val (xOffset, yOffset) =
+      schema
+        .map(_.zipWithIndex)
+        .zipWithIndex
+        .flatMap { case (line, y) => line.map { case (s, x) => (x, y) -> s } }
+        .find(_._2 == finalLocation.cubeSide)
+        .get
+        ._1
+    val resetFinalPosition = finalLocation.location.copy(
+      pos = finalLocation.location.pos.copy(
+        x = finalLocation.location.pos.x + xOffset * sideSize,
+        y = finalLocation.location.pos.y + yOffset * sideSize
+      )
+    )
+    pprint.log(resetFinalPosition)
+    val result = password(resetFinalPosition)
+    pprint.log(result)
 
 }

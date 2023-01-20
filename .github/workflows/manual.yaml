@@ -11,6 +11,9 @@ on:
   push:
     branches:
       - "main"
+    # Inputs the workflow accepts.
+    inputs:
+      name: Commit
   workflow_dispatch:
     # Inputs the workflow accepts.
     inputs:

@@ -27,4 +27,5 @@ jobs:
       - name: Send greeting
         run: |
           echo "Hello $USER"
+          whoami
           ls -la

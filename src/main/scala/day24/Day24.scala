@@ -32,6 +32,7 @@ object Day24 {
   def shortestPath(
       sourcePosition: Position,
       targetPosition: Position,
+      startingTime: Int,
       valley: Valley
   ): Int = {
 
@@ -61,7 +62,7 @@ object Day24 {
       current #:: bfs(next, step + 1)
     }
 
-    bfs(Set(sourcePosition), 0).zipWithIndex
+    bfs(Set(sourcePosition), startingTime).zipWithIndex
       .dropWhile(!_._1.contains(targetPosition))
       .headOption
       .map(_._2)
@@ -107,9 +108,19 @@ object Day24 {
     println(lines.mkString("\n"))
   }
 
+  val start: Position = Position(-1, 0)
+  val end: Position = Position(input.height, input.width - 1)
+
   @main
   def solution1(): Unit =
-    val pathLength = shortestPath(Position(-1, 0), Position(input.height, input.width - 1), input)
+    val pathLength = shortestPath(start, end, 0, input)
     println(pathLength)
+
+  @main
+  def solution2(): Unit =
+    val there = shortestPath(start, end, 0, input)
+    val back = shortestPath(end, start, there, input)
+    val thereAgain = shortestPath(start, end, there + back, input)
+    println(there + back + thereAgain)
 
 }
